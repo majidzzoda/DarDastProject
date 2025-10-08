@@ -87,7 +87,7 @@ const Header = ({ onSearch }) => {
                         aria-label={locale === "ru" ? "Switch to Tajik" : "Switch to Russian"}
                     >
                         <Globe className="w-4 h-4 text-gray-600" />
-                        <span className="text-[15px] font-medium text-gray-900">
+                        <span className="text-[15px] font-medium text-gray-800">
                             {locale === "ru" ? "TJ" : "RU"}
                         </span>
                         {isPending && (
