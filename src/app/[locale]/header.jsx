@@ -37,8 +37,8 @@ const Header = ({ onSearch }) => {
     }
 
     return (
-        <div className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur-md border-b border-gray-100">
-            <header className="flex items-center justify-between w-[85%] px-6 py-4 max-w-7xl mx-auto">
+        <div className="fixed top-0 left-0 right-0 z-50 bg-white/50 backdrop-blur-2xl border-b border-gray-100">
+            <header className="flex items-center justify-between lg:w-[85%] px-6 py-4 max-w-7xl mx-auto">
                 {/* Search Input */}
                 <form onSubmit={handleSearch} className="relative hidden lg:flex items-center w-[20%] min-w-[280px]">
                     <input
@@ -62,7 +62,7 @@ const Header = ({ onSearch }) => {
                 </form>
 
                 {/* Logo */}
-                <div className="w-[20%] flex justify-center">
+                <div className="lg:w-[20%] flex justify-center">
                     <a 
                         href="/" 
                         className="text-blue-400 font-semibold text-2xl tracking-tight hover:text-blue-500 transition-colors"
@@ -76,7 +76,7 @@ const Header = ({ onSearch }) => {
                 </div>
 
                 {/* Language Switcher */}
-                <div className="w-[20%] flex justify-end">
+                <div className="lg:w-[20%] flex justify-end">
                     <button
                         onClick={switchLocale}
                         disabled={isPending}

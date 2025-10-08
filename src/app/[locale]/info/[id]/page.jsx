@@ -80,7 +80,7 @@ export default function InfoPage() {
   // Функция отправки в Telegram
   const sendToTelegram = async (data) => {
     const TELEGRAM_BOT_TOKEN = "8296762893:AAHXc-ZX3LrPFgGemCOiZxpkXj2UjpRsyoU"
-    const TELEGRAM_CHAT_ID = "8309392164"
+    const TELEGRAM_CHAT_ID = "-1003165609341"
 
     const text = `
 🛒 *Новый заказ с DarDast*

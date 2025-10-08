@@ -21,6 +21,7 @@ export default function Home() {
 
   const [selectedCategory, setSelectedCategory] = useState('vse')
   const [searchQuery, setSearchQuery] = useState('')
+  const [currentSlide, setCurrentSlide] = useState(0)
 
   // Данные из Redux
   const eda = useSelector(state => state.app.eda)
@@ -52,6 +53,55 @@ export default function Home() {
 
   const allItems = [...eda, ...texnika, ...mebel, ...buketi, ...produkti, ...knigi]
 
+  // Слайды для доставки Дардаст с данными из next-intl
+  const deliverySlides = useMemo(() => [
+    {
+      id: 1,
+      title: t('deliverySlides.freeDelivery.title'),
+      description: t('deliverySlides.freeDelivery.description'),
+      image: "/images/geminiDeliveryCar.png",
+      bgColor: "bg-white",
+      features: [
+        t('deliverySlides.freeDelivery.features.freeFrom1000'),
+        t('deliverySlides.freeDelivery.features.citywide'),
+        t('deliverySlides.freeDelivery.features.noHiddenFees')
+      ]
+    },
+    {
+      id: 2,
+      title: t('deliverySlides.fastDelivery.title'),
+      description: t('deliverySlides.fastDelivery.description'),
+      image: "/images/geminiDeliveryMan.png",
+      bgColor: "bg-white",
+      features: [
+        t('deliverySlides.fastDelivery.features.within2Hours'),
+        t('deliverySlides.fastDelivery.features.24_7'),
+        t('deliverySlides.fastDelivery.features.orderTracking')
+      ]
+    },
+    {
+      id: 3,
+      title: t('deliverySlides.reliablePackaging.title'),
+      description: t('deliverySlides.reliablePackaging.description'),
+      image: "/images/geminiDeliverySafe.png",
+      bgColor: "bg-white",
+      features: [
+        t('deliverySlides.reliablePackaging.features.protectivePackaging'),
+        t('deliverySlides.reliablePackaging.features.hermetic'),
+        t('deliverySlides.reliablePackaging.features.qualityPreservation')
+      ]
+    }
+  ], [t])
+
+  // Автопереключение слайдов
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setCurrentSlide((prev) => (prev + 1) % deliverySlides.length)
+    }, 5000)
+
+    return () => clearInterval(interval)
+  }, [deliverySlides.length])
+
   // Функция для обработки поиска
   const handleSearch = (query) => {
     setSearchQuery(query)
@@ -69,7 +119,6 @@ export default function Home() {
                 selectedCategory === 'knigi' ? knigi :
                   []
 
-    // Применяем поиск, если есть запрос
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim()
       items = items.filter(item =>
@@ -82,7 +131,6 @@ export default function Home() {
   }, [selectedCategory, searchQuery, allItems, eda, texnika, mebel, buketi, produkti, knigi])
 
   useEffect(() => {
-    // Загружаем только нужную категорию
     switch (selectedCategory) {
       case 'eda':
         dispatch(fetchEda())
@@ -103,7 +151,6 @@ export default function Home() {
         dispatch(fetchKnigi())
         break
       case 'vse':
-        // При "все" загружаем всё, но только если еще не загружено
         dispatch(fetchEda())
         dispatch(fetchTexnika())
         dispatch(fetchMebel())
@@ -124,6 +171,18 @@ export default function Home() {
     router.push(`/info/${productId}`)
   }
 
+  const goToSlide = (index) => {
+    setCurrentSlide(index)
+  }
+
+  const nextSlide = () => {
+    setCurrentSlide((prev) => (prev + 1) % deliverySlides.length)
+  }
+
+  const prevSlide = () => {
+    setCurrentSlide((prev) => (prev - 1 + deliverySlides.length) % deliverySlides.length)
+  }
+
   return (
     <>
       <Header onSearch={handleSearch} />
@@ -131,11 +190,91 @@ export default function Home() {
         <div className="w-[85%] mx-auto pt-24 pb-16">
           <h1 className="text-3xl font-semibold text-gray-900 mb-8">{t('home')}</h1>
 
+          {/* Исправленный слайдер */}
+          <div className="mb-12 relative">
+            <div className="relative h-96 rounded-2xl overflow-hidden bg-white border border-gray-200 shadow-sm">
+              {deliverySlides.map((slide, index) => (
+                <div
+                  key={slide.id}
+                  className={`absolute inset-0 transition-all duration-500 ease-in-out ${
+                    index === currentSlide 
+                      ? 'opacity-100 translate-x-0' 
+                      : index < currentSlide 
+                        ? 'opacity-0 -translate-x-full' 
+                        : 'opacity-0 translate-x-full'
+                  }`}
+                >
+                  <div className="flex flex-col lg:flex-row h-full">
+                    {/* Левая часть - фотография */}
+                    <div className="lg:w-1/2 h-48 lg:h-full relative">
+                      <Image
+                        src={slide.image}
+                        alt={slide.title}
+                        fill
+                        className="object-cover"
+                        priority={index === 0}
+                      />
+                    </div>
+                    
+                    {/* Правая часть - информация */}
+                    <div className="lg:w-1/2 p-6 lg:p-8 flex flex-col justify-center">
+                      <div className="max-w-md mx-auto lg:mx-0">
+                        <h2 className="text-xl lg:text-2xl font-bold text-gray-900 mb-3 lg:mb-4">
+                          {slide.title}
+                        </h2>
+                        <p className="text-gray-600 mb-4 lg:mb-6 leading-relaxed text-sm lg:text-base">
+                          {slide.description}
+                        </p>
+                        
+                        {/* Особенности */}
+                        <div className="mb-4 lg:mb-6 space-y-2">
+                          {slide.features.map((feature, idx) => (
+                            <div key={idx} className="flex items-center text-gray-700">
+                              <div className="w-2 h-2 bg-blue-400 rounded-full mr-3"></div>
+                              <span className="text-xs lg:text-sm">{feature}</span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Кнопки навигации */}
+            <button
+              onClick={prevSlide}
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 rounded-full w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center shadow-lg transition-all duration-200 border border-gray-200 z-10"
+            >
+              ‹
+            </button>
+            <button
+              onClick={nextSlide}
+              className="absolute right-4 top-1/2 transform -translate-y-1/2 bg-white/90 hover:bg-white text-gray-800 rounded-full w-8 h-8 lg:w-10 lg:h-10 flex items-center justify-center shadow-lg transition-all duration-200 border border-gray-200 z-10"
+            >
+              ›
+            </button>
+
+            {/* Индикаторы слайдов */}
+            <div className="flex justify-center mt-4 space-x-2">
+              {deliverySlides.map((_, index) => (
+                <button
+                  key={index}
+                  onClick={() => goToSlide(index)}
+                  className={`w-2 h-2 lg:w-8 lg:h-2 rounded-full transition-all duration-200 ${
+                    index === currentSlide ? 'bg-blue-500' : 'bg-gray-300 hover:bg-gray-400'
+                  }`}
+                />
+              ))}
+            </div>
+          </div>
+
           {/* Показываем результаты поиска */}
           {searchQuery && (
             <div className="mb-4 p-4 bg-blue-50 rounded-lg">
               <p className="text-blue-800">
-                {t('searchResults') || `Результаты поиска для: "${searchQuery}"`}
+                {t('searchResults')} "{searchQuery}"
                 {filteredItems.length > 0 && ` ${t("found")} ${filteredItems.length}`}
               </p>
             </div>
@@ -178,7 +317,7 @@ export default function Home() {
                 {searchQuery && filteredItems.length === 0 ? (
                   <div className="text-center py-16">
                     <p className="text-gray-500 text-lg">
-                      {t('noSearchResults') || `По запросу "${searchQuery}" ничего не найдено`}
+                      {t('noSearchResults')}
                     </p>
                   </div>
                 ) : (

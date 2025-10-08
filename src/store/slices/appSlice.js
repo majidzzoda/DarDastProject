@@ -1,13 +1,14 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit'
 
-const API_EDA = "http://localhost:3002/eda"
-const API_TEXNIKA = "http://localhost:3002/texnika"
-const API_MEBEL = "http://localhost:3002/mebel"
-const API_BUKETI = "http://localhost:3002/buketi"
-const API_PRODUCTI = "http://localhost:3002/produ%D1%81ti"
-const API_KNIGI = "http://localhost:3002/knigi"
+// Отдельные URL для каждого ресурса Mockapi
+const API_EDA = "https://bacb0c2f642ae180.mokky.dev/dd_eda"
+const API_TEXNIKA = "https://bacb0c2f642ae180.mokky.dev/dd_texnika"
+const API_MEBEL = "https://bacb0c2f642ae180.mokky.dev/dd_mebel"
+const API_BUKETI = "https://bacb0c2f642ae180.mokky.dev/dd_buketi"
+const API_PRODUKTI = "https://bacb0c2f642ae180.mokky.dev/dd_producti"
+const API_KNIGI = "https://bacb0c2f642ae180.mokky.dev/dd_knigi"
 
-// Асинхронные экшены
+// Асинхронные экшены для Mockapi
 export const fetchEda = createAsyncThunk('app/fetchEda', async () => {
   const res = await fetch(API_EDA)
   if (!res.ok) throw new Error('Ошибка загрузки еды')
@@ -33,7 +34,7 @@ export const fetchBuketi = createAsyncThunk('app/fetchBuketi', async () => {
 })
 
 export const fetchProdukti = createAsyncThunk('app/fetchProdukti', async () => {
-  const res = await fetch(API_PRODUCTI)
+  const res = await fetch(API_PRODUKTI)
   if (!res.ok) throw new Error('Ошибка загрузки продуктов')
   return res.json()
 })
@@ -42,6 +43,73 @@ export const fetchKnigi = createAsyncThunk('app/fetchKnigi', async () => {
   const res = await fetch(API_KNIGI)
   if (!res.ok) throw new Error('Ошибка загрузки книг')
   return res.json()
+})
+
+// CRUD операции
+export const createProduct = createAsyncThunk('app/createProduct', async ({ category, productData }) => {
+  // Определяем URL в зависимости от категории
+  let url;
+  switch (category) {
+    case 'eda': url = API_EDA; break;
+    case 'texnika': url = API_TEXNIKA; break;
+    case 'mebel': url = API_MEBEL; break;
+    case 'buketi': url = API_BUKETI; break;
+    case 'produkti': url = API_PRODUKTI; break;
+    case 'knigi': url = API_KNIGI; break;
+    default: throw new Error('Неизвестная категория');
+  }
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(productData),
+  })
+  if (!res.ok) throw new Error('Ошибка создания продукта')
+  return res.json()
+})
+
+export const updateProduct = createAsyncThunk('app/updateProduct', async ({ category, id, productData }) => {
+  let url;
+  switch (category) {
+    case 'eda': url = `${API_EDA}/${id}`; break;
+    case 'texnika': url = `${API_TEXNIKA}/${id}`; break;
+    case 'mebel': url = `${API_MEBEL}/${id}`; break;
+    case 'buketi': url = `${API_BUKETI}/${id}`; break;
+    case 'produkti': url = `${API_PRODUKTI}/${id}`; break;
+    case 'knigi': url = `${API_KNIGI}/${id}`; break;
+    default: throw new Error('Неизвестная категория');
+  }
+
+  const res = await fetch(url, {
+    method: 'PATCH',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(productData),
+  })
+  if (!res.ok) throw new Error('Ошибка обновления продукта')
+  return res.json()
+})
+
+export const deleteProduct = createAsyncThunk('app/deleteProduct', async ({ category, id }) => {
+  let url;
+  switch (category) {
+    case 'eda': url = `${API_EDA}/${id}`; break;
+    case 'texnika': url = `${API_TEXNIKA}/${id}`; break;
+    case 'mebel': url = `${API_MEBEL}/${id}`; break;
+    case 'buketi': url = `${API_BUKETI}/${id}`; break;
+    case 'produkti': url = `${API_PRODUKTI}/${id}`; break;
+    case 'knigi': url = `${API_KNIGI}/${id}`; break;
+    default: throw new Error('Неизвестная категория');
+  }
+
+  const res = await fetch(url, {
+    method: 'DELETE',
+  })
+  if (!res.ok) throw new Error('Ошибка удаления продукта')
+  return { category, id }
 })
 
 const initialState = {
@@ -80,10 +148,30 @@ export const appSlice = createSlice({
     setUser: (state, action) => {
       state.user = action.payload
     },
+    addProductToCategory: (state, action) => {
+      const { category, product } = action.payload
+      if (state[category]) {
+        state[category].push(product)
+      }
+    },
+    updateProductInCategory: (state, action) => {
+      const { category, id, updates } = action.payload
+      if (state[category]) {
+        const index = state[category].findIndex(item => item.id === id)
+        if (index !== -1) {
+          state[category][index] = { ...state[category][index], ...updates }
+        }
+      }
+    },
+    removeProductFromCategory: (state, action) => {
+      const { category, id } = action.payload
+      if (state[category]) {
+        state[category] = state[category].filter(item => item.id !== id)
+      }
+    },
   },
   extraReducers: (builder) => {
     builder
-
       // EDA
       .addCase(fetchEda.pending, (state) => {
         state.edaLoading = true
@@ -167,8 +255,38 @@ export const appSlice = createSlice({
         state.knigiLoading = false
         state.knigiError = action.error.message
       })
+
+      // CRUD операции
+      .addCase(createProduct.fulfilled, (state, action) => {
+        const { category } = action.meta.arg
+        if (state[category]) {
+          state[category].push(action.payload)
+        }
+      })
+      .addCase(updateProduct.fulfilled, (state, action) => {
+        const { category, id } = action.meta.arg
+        if (state[category]) {
+          const index = state[category].findIndex(item => item.id === id)
+          if (index !== -1) {
+            state[category][index] = { ...state[category][index], ...action.payload }
+          }
+        }
+      })
+      .addCase(deleteProduct.fulfilled, (state, action) => {
+        const { category, id } = action.payload
+        if (state[category]) {
+          state[category] = state[category].filter(item => item.id !== id)
+        }
+      })
   }
 })
 
-export const { setLocale, setUser } = appSlice.actions
+export const { 
+  setLocale, 
+  setUser, 
+  addProductToCategory, 
+  updateProductInCategory, 
+  removeProductFromCategory 
+} = appSlice.actions
+
 export default appSlice.reducer
